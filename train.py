@@ -29,22 +29,22 @@ def train_textcnn_model(model, train_data, valid_data, padding_idx, config):
     # params = [p for k, p in model.named_parameters(
     # ) if p.requires_grad and "embed" not in k]
     params = [p for k, p in model.named_parameters() if p.requires_grad]
-    optimizer = Adam(params, lr=config.lr)
-    criterion = CrossEntropyLoss(reduction="sum")
+    optimizer = Adam(params, lr=config.lr)#优化器
+    criterion = CrossEntropyLoss(reduction="sum")#评价函数
     model.train()
 
-    for epoch in range(1, config.epochs + 1):
+    for epoch in range(1, config.epochs + 1):#epoch代表一次完整训练
         train_data_iter = iter(train_data)
         for idx, batch in enumerate(train_data_iter):
-            model.zero_grad()
+            model.zero_grad()#刷新为0梯度
             ground_truth = batch.label
             # batch_first = False
-            outputs = model(batch.sent)
+            outputs = model(batch.sent)#输出tensor值
             loss = criterion(outputs, ground_truth)
-            loss.backward()
-            optimizer.step()
+            loss.backward()#反向传播计算
+            optimizer.step()#更新参数
 
-            if idx % 20 == 0:
+            if idx % 20 == 0:#每20个batch输出一次 loss
                 valid_loss = valid_textcnn_model(
                     model, valid_data, criterion, config)
                 # 处理
@@ -83,7 +83,7 @@ def main():
         dataset="train",
         batch_size=config.batch_size,
         shuffle=True)
-    train_data.load()
+    train_data.load()#获得 数值形式的 词组和标签， 制造好了 字词：id 的映射表
 
     vocab = train_data.vocab#词汇映射表
 

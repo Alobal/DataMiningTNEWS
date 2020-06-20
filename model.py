@@ -10,7 +10,7 @@ class TextCNN(nn.Module):
         self.num_channel = config.num_channel
         self.num_class = config.num_class
         self.word_embedding = nn.Embedding(
-            vocab_size, config.embed_dim)  # 词向量，这里直接随机
+            vocab_size, config.embed_dim)  # 词向量，这里直接随机， 有vocab_size个词，每个词是embed_dim维向量
 
         self.convs = nn.ModuleList(
             [nn.Conv2d(self.num_channel, config.num_kernel, (kernel, config.embed_dim))

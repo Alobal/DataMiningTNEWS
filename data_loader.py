@@ -58,22 +58,22 @@ class Vocab(object):
         self.min_freq = config.min_freq
 
     def make_vocab(self, dataset):
-        for x in dataset:
-            if x != [""]:
+        for x in dataset:#，dataset为[[词1，词2],[]]则在counter字典中更新
+            if x != [""]:#词不为空, 则录入counter
                 self.counter.update(x)
-        if self.min_freq > 1:
+        if self.min_freq > 1:#用最小出现次数对counter进行筛选，counter取为  筛选出 频率大于最小出现次数 的词 的频率字典
             self.counter = {w: i for w, i in filter(
                 lambda x: x[1] >= self.min_freq, self.counter.items())}
-        self.vocab_size = 0
-        for w in self.specials:
-            self.stoi[w] = self.vocab_size
+        self.vocab_size = 0#词汇表大小
+        for w in self.specials:#特殊词处理
+            self.stoi[w] = self.vocab_size #初始化为前几个递增值
+            self.vocab_size += 1  
+
+        for w in self.counter.keys():#对读取的词
+            self.stoi[w] = self.vocab_size #编码递增序
             self.vocab_size += 1
 
-        for w in self.counter.keys():
-            self.stoi[w] = self.vocab_size
-            self.vocab_size += 1
-
-        self.itos = {i: w for w, i in self.stoi.items()}
+        self.itos = {i: w for w, i in self.stoi.items()}#反向映射表
 
     def __len__(self):
         return self.vocab_size
@@ -99,11 +99,11 @@ class DataSet(list):
         return [1 if x not in stoi else stoi[x] for x in words]
 
     def numericalize(self, w2id, c2id):#w2id 字的id字典  c2id分类的id字典
-        for i, example in enumerate(self):
+        for i, example in enumerate(self):#将self打包成 索引，值 的序列 进行迭代
             sent, label = example
-            sent = self._numericalize(sent, w2id)#字词转换为数值
-            label = c2id[label]
-            self[i] = (sent, label)
+            sent = self._numericalize(sent, w2id)#句子字词转换为数值
+            label = c2id[label]#标签转换为数值
+            self[i] = (sent, label)#更新迭代对象  原 词组，标签  转换为 词组的数值，标签的数值
 
 
 class DataBatchIterator(object):
@@ -133,21 +133,21 @@ class DataBatchIterator(object):
     def load(self, vocab_cache=None):
         self.examples.read()#[[词]，标记]
 
-        if not vocab_cache and self.is_train:
+        if not vocab_cache and self.is_train:#第一次制作词汇表
             # 0: 分过词的句子， 1: 关键词， 2: 标记
             self.vocab.make_vocab([x[0] for x in self.examples])
             self.cls_vocab.make_vocab([[x[1]] for x in self.examples])
-            if not os.path.exists(self.config.save_vocab):
+            if not os.path.exists(self.config.save_vocab):#首次保存词汇表
                 torch.save(self.vocab, self.config.save_vocab + ".txt")
                 torch.save(self.cls_vocab, self.config.save_vocab + ".cls.txt")
-        else:#测试数据直接载入做好的词汇表
+        else:#已有词汇表， 载入
             self.vocab = torch.load(self.config.save_vocab + ".txt")
             self.cls_vocab = torch.load(self.config.save_vocab + ".cls.txt")
-        assert len(self.vocab) > 0
+        assert len(self.vocab) > 0#检查词汇表长度大于0
         self.examples.numericalize(
             w2id=self.vocab.stoi, c2id=self.cls_vocab.stoi)#将examples字词内容转换为数值
 
-        self.num_batches = math.ceil(len(self.examples)/self.batch_size)
+        self.num_batches = math.ceil(len(self.examples)/self.batch_size)#按batch大小 计算出有多少个batch
 
     def _pad(self, sentence, max_L, w2id, add_bos=False, add_eos=False):
         if add_bos:
